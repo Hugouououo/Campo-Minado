@@ -36,7 +36,7 @@ public class CampoMinado {
     JPanel painelTabuleiro = new JPanel();
     JLabel textoCronometro = new JLabel();
     Timer cronometro;
-    JButton botaoReiniciar = new JButton("@");
+    JButton botaoReiniciar = new JButton("🔁");
 
     int quantMinas = 15;
     int minasSobrando = quantMinas;
@@ -68,6 +68,17 @@ public class CampoMinado {
     }
 
     CampoMinado() {
+        // Carregando e escalonando as imagens PNG
+        try {
+            iconeBomba = new ImageIcon(new ImageIcon(getClass().getResource("/imagens/icone_bomba.png"))
+                    .getImage().getScaledInstance(tamBlocos - 20, tamBlocos - 20, Image.SCALE_SMOOTH));
+            iconeBandeira = new ImageIcon(new ImageIcon(getClass().getResource("/imagens/icone_bandeira.png"))
+                    .getImage().getScaledInstance(tamBlocos - 20, tamBlocos - 20, Image.SCALE_SMOOTH));
+        } catch (Exception e) {
+            System.err.println("Erro ao carregar imagens: " + e.getMessage());
+            iconeBomba = null;
+            iconeBandeira = null;
+        }
 
         frame.setSize(tabLargura, tabAltura);
         frame.setLocationRelativeTo(null);
@@ -88,10 +99,6 @@ public class CampoMinado {
         textoCronometro.setOpaque(true);
 
         painelCabecalho.add(botaoReiniciar, BorderLayout.WEST);
-        painelCabecalho.add(textoTitulo, BorderLayout.CENTER);
-        painelCabecalho.add(textoCronometro, BorderLayout.EAST);
-        frame.add(painelCabecalho, BorderLayout.NORTH);
-
         painelCabecalho.add(textoTitulo, BorderLayout.CENTER);
         painelCabecalho.add(textoCronometro, BorderLayout.EAST);
         frame.add(painelCabecalho, BorderLayout.NORTH);
@@ -121,7 +128,8 @@ public class CampoMinado {
                         Blocos bloco = (Blocos) e.getSource();
 
                         if(e.getButton() == MouseEvent.BUTTON1){
-                            if (bloco.getText() == ""){
+                            // Agora verifica se o ícone é nulo antes de revelar
+                            if (bloco.getIcon() == null && bloco.getText().isEmpty()){
                                 if (listaMinas.contains(bloco))
                                     revelarMinas();
                                 else
@@ -129,12 +137,14 @@ public class CampoMinado {
                             }
                         }
                         else if (e.getButton() == MouseEvent.BUTTON3){
-                            if(bloco.getText() == "" && bloco.isEnabled()){
-                                bloco.setText("🚩");
+                            // Se não tem ícone, adiciona a bandeira
+                            if(bloco.getIcon() == null && bloco.isEnabled()){
+                                bloco.setIcon(iconeBandeira);
+                                bloco.setText("");
                                 minasSobrando--;
                                 textoTitulo.setText("Minas restantes: " + Integer.toString(minasSobrando));
-                            } else if (bloco.getText() == "🚩") {
-                                bloco.setText("");
+                            } else if (bloco.getIcon() == iconeBandeira) { // Se já tem uma bandeira
+                                bloco.setIcon(null);
                                 minasSobrando++;
                                 textoTitulo.setText("Minas restantes: " + Integer.toString(minasSobrando));
                             }
@@ -146,14 +156,7 @@ public class CampoMinado {
             }
         }
 
-        botaoReiniciar.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                reiniciarJogo();
-            }
-        });
-        botaoReiniciar.setBackground(new Color(230, 230, 230));
-
+        // Listener para redimensionar as imagens dinamicamente
         painelTabuleiro.addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
@@ -167,10 +170,26 @@ public class CampoMinado {
                 for (int l = 0; l < numLinhas; l++) {
                     for (int c = 0; c < numColunas; c++) {
                         tabuleiro[l][c].setFont(new Font("Arial Unicode MS", Font.PLAIN, newFontSize));
+
+                        // Redimensiona a bomba ou bandeira se elas existirem
+                        if (tabuleiro[l][c].getIcon() != null) {
+                            ImageIcon currentIcon = (ImageIcon) tabuleiro[l][c].getIcon();
+                            Image img = currentIcon.getImage();
+                            Image scaledImg = img.getScaledInstance(newBlockSize - 20, newBlockSize - 20, Image.SCALE_SMOOTH);
+                            tabuleiro[l][c].setIcon(new ImageIcon(scaledImg));
+                        }
                     }
                 }
             }
         });
+
+        botaoReiniciar.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                reiniciarJogo();
+            }
+        });
+        botaoReiniciar.setBackground(new Color(230, 230, 230));
 
         frame.setVisible(true);
 
@@ -192,6 +211,7 @@ public class CampoMinado {
                 Blocos bloco = tabuleiro[l][c];
                 bloco.setEnabled(true);
                 bloco.setText("");
+                bloco.setIcon(null); // Limpa o ícone também
             }
         }
         plantarMinas();
@@ -217,8 +237,7 @@ public class CampoMinado {
     void revelarMinas(){
         for (int i=0; i < listaMinas.size(); i++){
             Blocos bloco = listaMinas.get(i);
-            bloco.setText("💣");
-            //pintarBlocos();
+            bloco.setIcon(iconeBomba); // Usa o ícone da bomba
         }
 
         gameOver = true;
@@ -242,6 +261,7 @@ public class CampoMinado {
         }
 
         blocos.setEnabled(false);
+        blocos.setIcon(null); // Remove a bandeira se houver
         blocosClicados+=1;
 
         int minasEncontradas = 0;
@@ -287,12 +307,4 @@ public class CampoMinado {
         }
         return 0;
     }
-
-//    void pintarBlocos(){
-//        if(gameOver){
-//            Blocos bloco = new Blocos(l, c);
-//            tabuleiro[l][c] = bloco;
-//            bloco.setBackground(new Color(207, 24, 24)); // Fundo cinza claro
-//        }
-//    }
 }
