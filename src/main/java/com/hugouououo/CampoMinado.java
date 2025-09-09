@@ -70,9 +70,9 @@ public class CampoMinado {
     CampoMinado() {
         // Carregando e escalonando as imagens PNG
         try {
-            iconeBomba = new ImageIcon(new ImageIcon(getClass().getResource("/imagens/icone_bomba.png"))
+            iconeBomba = new ImageIcon(new ImageIcon(getClass().getResource("/imagens/iconeBomba.png"))
                     .getImage().getScaledInstance(tamBlocos - 20, tamBlocos - 20, Image.SCALE_SMOOTH));
-            iconeBandeira = new ImageIcon(new ImageIcon(getClass().getResource("/imagens/icone_bandeira.png"))
+            iconeBandeira = new ImageIcon(new ImageIcon(getClass().getResource("/imagens/iconeBandeira.png"))
                     .getImage().getScaledInstance(tamBlocos - 20, tamBlocos - 20, Image.SCALE_SMOOTH));
         } catch (Exception e) {
             System.err.println("Erro ao carregar imagens: " + e.getMessage());
@@ -137,13 +137,13 @@ public class CampoMinado {
                             }
                         }
                         else if (e.getButton() == MouseEvent.BUTTON3){
-                            // Se não tem ícone, adiciona a bandeira
+                            // se não tem ícone -> adiciona a bandeira
                             if(bloco.getIcon() == null && bloco.isEnabled()){
                                 bloco.setIcon(iconeBandeira);
                                 bloco.setText("");
                                 minasSobrando--;
                                 textoTitulo.setText("Minas restantes: " + Integer.toString(minasSobrando));
-                            } else if (bloco.getIcon() == iconeBandeira) { // Se já tem uma bandeira
+                            } else if (bloco.getIcon() == iconeBandeira) { // se ja tem uma bandeira
                                 bloco.setIcon(null);
                                 minasSobrando++;
                                 textoTitulo.setText("Minas restantes: " + Integer.toString(minasSobrando));
