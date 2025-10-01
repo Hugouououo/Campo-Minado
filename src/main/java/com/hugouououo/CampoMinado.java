@@ -4,12 +4,13 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.Random;
 
-public class CampoMinado
-{
-    private static class Blocos extends JButton
-    {
+public class CampoMinado {
+
+    private static class Blocos extends JButton{
+
         public int l;
         public int c;
 
@@ -27,7 +28,7 @@ public class CampoMinado
 
     ImageIcon iconeBomba;
     ImageIcon iconeBandeira;
-    //ImageIcon iconeVazio;
+    ImageIcon iconeVazio;
 
     JFrame frame = new JFrame("Campo Minado");
 
@@ -35,11 +36,10 @@ public class CampoMinado
     JPanel painelTabuleiro = new JPanel();
     JLabel textoCronometro = new JLabel();
     Timer cronometro;
-
     JButton botaoReiniciar = new JButton("🔁");
 
-    int quantMinas = 10;
-    int bandeirasSobrando = quantMinas;
+    int quantMinas = 5;
+    int minasSobrando = quantMinas;
 
     Blocos[][] tabuleiro = new Blocos[numLinhas][numColunas];
     ArrayList<Blocos> listaMinas;
@@ -67,13 +67,17 @@ public class CampoMinado
         cronometro.start();
     }
 
-    CampoMinado()
-    {
+    CampoMinado() {
+        // Carregando e escalonando as imagens PNG
         try {
             iconeBomba = new ImageIcon(new ImageIcon(getClass().getResource("/imagens/iconeBomba.png"))
                     .getImage().getScaledInstance(tamBlocos - 20, tamBlocos - 20, Image.SCALE_SMOOTH));
             iconeBandeira = new ImageIcon(new ImageIcon(getClass().getResource("/imagens/iconeBandeira.png"))
                     .getImage().getScaledInstance(tamBlocos - 20, tamBlocos - 20, Image.SCALE_SMOOTH));
+            if(iconeBandeira != null){
+                frame.setIconImage(iconeBandeira.getImage());
+            }
+
         } catch (Exception e) {
             System.err.println("Erro ao carregar imagens: " + e.getMessage());
             iconeBomba = null;
@@ -90,7 +94,7 @@ public class CampoMinado
 
         textoTitulo.setFont(new Font("Helvetica", Font.BOLD, 25));
         textoTitulo.setHorizontalAlignment(JLabel.CENTER);
-        textoTitulo.setText("Bandeiras disponíveis: " + Integer.toString(bandeirasSobrando));
+        textoTitulo.setText("Minas restantes: " + Integer.toString(minasSobrando));
         textoTitulo.setOpaque(true);
 
         textoCronometro.setFont(new Font("Helvetica", Font.BOLD, 25));
@@ -102,8 +106,6 @@ public class CampoMinado
         painelCabecalho.add(textoTitulo, BorderLayout.CENTER);
         painelCabecalho.add(textoCronometro, BorderLayout.EAST);
         frame.add(painelCabecalho, BorderLayout.NORTH);
-
-        botaoReiniciar.setToolTipText("Reiniciar jogo");
 
         painelTabuleiro.setLayout(new GridLayout(numLinhas, numColunas));
         frame.add(painelTabuleiro);
@@ -141,22 +143,19 @@ public class CampoMinado
                         else if (e.getButton() == MouseEvent.BUTTON3){
                             // se não tem ícone -> adiciona a bandeira
                             if(bloco.getIcon() == null && bloco.isEnabled()){
-                                if(bandeirasSobrando > 0) {
-                                    bloco.setIcon(iconeBandeira);
-                                    bloco.setText("");
-                                    bandeirasSobrando--;
-                                    textoTitulo.setText("Bandeiras disponíveis: " + Integer.toString(bandeirasSobrando));
-                                }
+                                bloco.setIcon(iconeBandeira);
+                                bloco.setText("");
+                                minasSobrando--;
+                                textoTitulo.setText("Bandeiras restantes: " + Integer.toString(minasSobrando));
                             } else if (bloco.getIcon() == iconeBandeira) { // se ja tem uma bandeira
                                 bloco.setIcon(null);
-                                bandeirasSobrando++;
-                                textoTitulo.setText("Bandeiras disponíveis: " + Integer.toString(bandeirasSobrando));
+                                minasSobrando++;
+                                textoTitulo.setText("Bandeiras restantes: " + Integer.toString(minasSobrando));
                             }
                         }
                     }
                 });
                 painelTabuleiro.add(bloco);
-
             }
         }
 
@@ -216,6 +215,7 @@ public class CampoMinado
                 bloco.setEnabled(true);
                 bloco.setText("");
                 bloco.setIcon(null); // Limpa o ícone também
+                bloco.setBackground(new Color(230, 230, 230));
             }
         }
         plantarMinas();
@@ -223,8 +223,8 @@ public class CampoMinado
 
     void plantarMinas(){
         listaMinas = new ArrayList<Blocos>();
-        int minasSobrando = quantMinas;
-        textoTitulo.setText("Bandeiras disponíveis: " + Integer.toString(minasSobrando));
+        minasSobrando = quantMinas;
+        textoTitulo.setText("Bandeiras restantes: " + Integer.toString(minasSobrando));
 
         while (minasSobrando > 0){
             int l = aleatorio.nextInt(numLinhas);
@@ -247,6 +247,26 @@ public class CampoMinado
         gameOver = true;
         textoTitulo.setText("Você explodiu.");
         cronometro.stop();
+        pintarBlocos();
+    }
+
+    void pintarBlocos(){
+        if (Objects.equals(textoTitulo.getText(), "Você explodiu.")){
+            for (int l = 0; l < numLinhas; l++) {
+                for (int c = 0; c < numColunas; c++) {
+                    Blocos bloco = tabuleiro[l][c];
+                    bloco.setBackground(new Color(255, 147, 147));
+                }
+            }
+        }
+        else if (Objects.equals(textoTitulo.getText(), "Você venceu!")){
+            for (int l = 0; l < numLinhas; l++) {
+                for (int c = 0; c < numColunas; c++) {
+                    Blocos bloco = tabuleiro[l][c];
+                    bloco.setBackground(new Color(171, 244, 152));
+                }
+            }
+        }
     }
 
     void verificarMinas(int l, int c){
@@ -292,14 +312,13 @@ public class CampoMinado
             verificarMinas(l + 1, c - 1);
             verificarMinas(l + 1, c);
             verificarMinas(l + 1, c + 1);
-
         }
 
         if(blocosClicados == numLinhas * numColunas - listaMinas.size()){
             gameOver = true;
             textoTitulo.setText("Você venceu!");
             cronometro.stop();
-            // dá erro no console, mas continua funcionando
+            pintarBlocos();
         }
     }
 
